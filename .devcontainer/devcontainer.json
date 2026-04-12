@@ -2,6 +2,7 @@
   "name": "Spendesk Rebuild Workshop",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
 
+  "onCreateCommand": "npm install -g @anthropic-ai/claude-code",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
 
   "forwardPorts": [3000, 5173],
@@ -18,7 +19,6 @@
       "settings": {
         "workbench.activityBar.visible": false,
         "workbench.statusBar.visible": true,
-        "workbench.sideBar.location": "left",
         "editor.minimap.enabled": false,
         "editor.fontSize": 14,
         "editor.lineHeight": 1.6,
@@ -34,9 +34,5 @@
         "workbench.colorTheme": "Default Dark Modern"
       }
     }
-  },
-
-  "remoteEnv": {
-    "NODE_ENV": "development"
   }
 }
