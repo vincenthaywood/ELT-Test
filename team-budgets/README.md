@@ -7,9 +7,9 @@ Your module: department budget tracking.
 
 ## Start here
 Open a terminal and type `claude`, then paste:
-> "Read the CLAUDE.md and build the Budgets module. Show all department budgets with allocated vs spent amounts, a progress bar for utilisation, and a status badge for over/under budget."
+> "Read the CLAUDE.md and build the Budgets module. Show all department budgets with allocated vs spent, a progress bar for utilisation, and a status badge."
 
 ## Stretch goals
-- Highlight overspent budgets in red
-- Progress bar colour changes: green < 70%, amber 70-90%, red > 90%
-- Summary: total allocated vs total spent across all departments
+- Progress bar colour: green < 70%, amber 70–90%, red > 90%
+- Highlight overspent budgets
+- Total allocated vs total spent summary

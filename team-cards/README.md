@@ -13,4 +13,4 @@ Open a terminal and type `claude`, then paste:
 ## Stretch goals
 - Freeze / unfreeze a card
 - Filter by status (active / frozen / pending)
-- Transaction history modal when you click a card
+- Transaction history modal on row click

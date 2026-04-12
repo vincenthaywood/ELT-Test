@@ -7,7 +7,7 @@ You can read from ALL tables: expenses, cards, transactions, budgets, purchase_o
 
 ## Start here
 Open a terminal and type `claude`, then paste:
-> "Read the CLAUDE.md and build the Analytics module. Show key spend metrics: total expenses this month, top spending categories, budget utilisation by department. Use charts where possible."
+> "Read the CLAUDE.md and build the Analytics module. Show key spend metrics: total expenses, top spending categories, budget utilisation by department. Use charts."
 
 ## Stretch goals
 - Spending trend over time
