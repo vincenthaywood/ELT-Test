@@ -10,49 +10,57 @@ echo   ^|   Spendesk Workshop -- Windows Setup     ^|
 echo   +==========================================+
 echo.
 
-:: ── Node.js check ────────────────────────────────────────────
-echo [1/4] Checking Node.js...
+:: ── Node.js ───────────────────────────────────────────────
+echo [1/5] Checking Node.js...
 node --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo   X  Node.js not found.
-    echo.
-    echo   Please install it first:
-    echo   1. Go to https://nodejs.org
-    echo   2. Click the big LTS button and run the installer
-    echo   3. Restart your computer
-    echo   4. Double-click this file again
-    echo.
+    echo   Go to https://nodejs.org, install it, restart, then run this again.
     start https://nodejs.org
-    pause
-    exit /b 1
+    pause & exit /b 1
 )
 for /f "tokens=*" %%v in ('node --version') do echo   OK  Node.js %%v
 
 :: ── Claude Code ──────────────────────────────────────────────
 echo.
-echo [2/4] Installing Claude Code...
+echo [2/5] Installing Claude Code...
 claude --version >nul 2>&1
 if %errorlevel% equ 0 (
     echo   OK  Already installed
 ) else (
-    echo   Installing... (takes about 30 seconds)
     call npm install -g @anthropic-ai/claude-code
-    if %errorlevel% neq 0 (
-        echo   X  Install failed.
-        echo   Try right-clicking this file and selecting Run as Administrator
-        pause
-        exit /b 1
-    )
-    echo   OK  Claude Code installed
+    if %errorlevel% neq 0 ( echo   X  Failed. Try right-click Run as Administrator & pause & exit /b 1 )
+    echo   OK  Installed
 )
+
+:: ── Team selection ──────────────────────────────────────────
+echo.
+echo [3/5] Which team are you on?
+echo.
+echo   1) Cards
+echo   2) Expenses
+echo   3) Approvals
+echo   4) Analytics
+echo   5) Budgets
+echo   6) Procurement
+echo.
+set /p TEAM_NUM=  Enter number (1-6): 
+
+if "%TEAM_NUM%"=="1" ( set TEAM_DIR=team-cards&      set TEAM_NAME=Cards )
+if "%TEAM_NUM%"=="2" ( set TEAM_DIR=team-expenses&    set TEAM_NAME=Expenses )
+if "%TEAM_NUM%"=="3" ( set TEAM_DIR=team-approvals&   set TEAM_NAME=Approvals )
+if "%TEAM_NUM%"=="4" ( set TEAM_DIR=team-analytics&   set TEAM_NAME=Analytics )
+if "%TEAM_NUM%"=="5" ( set TEAM_DIR=team-budgets&     set TEAM_NAME=Budgets )
+if "%TEAM_NUM%"=="6" ( set TEAM_DIR=team-procurement& set TEAM_NAME=Procurement )
+
+if not defined TEAM_DIR ( echo   X  Invalid choice & pause & exit /b 1 )
+echo   OK  Team %TEAM_NAME% selected
 
 :: ── MCP config ───────────────────────────────────────────────
 echo.
-echo [3/4] Configuring workshop tools...
+echo [4/5] Configuring workshop tools...
+set WORKSHOP=%USERPROFILE%\spendesk-workshop
 if not exist "%USERPROFILE%\.claude" mkdir "%USERPROFILE%\.claude"
-
->>"%USERPROFILE%\.claude\settings.json" echo {}
-type nul > "%USERPROFILE%\.claude\settings.json"
 
 (
 echo {
@@ -75,61 +83,59 @@ echo       "command": "npx",
 echo       "args": [
 echo         "-y",
 echo         "@modelcontextprotocol/server-filesystem",
-echo         "%USERPROFILE%\spendesk-workshop"
+echo         "%WORKSHOP%\%TEAM_DIR%"
 echo       ]
 echo     }
 echo   }
 echo }
 ) > "%USERPROFILE%\.claude\settings.json"
-echo   OK  Supabase, Playwright and Filesystem configured
+echo   OK  Tools configured (filesystem locked to your team folder)
 
-:: ── Workshop folder ──────────────────────────────────────────
+:: ── Workshop folder ─────────────────────────────────────────
 echo.
-echo [4/4] Setting up your workshop folder...
-set WORKSHOP=%USERPROFILE%\spendesk-workshop
-
+echo [5/5] Downloading workshop files...
 if exist "%WORKSHOP%\.git" (
-    echo   Updating existing workshop folder...
-    cd /d "%WORKSHOP%"
-    git pull --quiet
+    cd /d "%WORKSHOP%" && git pull --quiet
 ) else (
-    echo   Downloading workshop files...
-    git clone https://github.com/vincenthaywood/ELT-Test.git "%WORKSHOP%" 2>nul
+    git clone https://github.com/vincenthaywood/ELT-Test.git "%WORKSHOP%"
 )
-
 cd /d "%WORKSHOP%"
 call npm install --silent >nul 2>&1
-echo   OK  Workshop folder ready
+echo   OK  Workshop files ready
 
-:: ── Start dev server ─────────────────────────────────────────
-echo.
-echo   Starting live preview...
+:: ── Dev server + browser ───────────────────────────────────
 start /b cmd /c "cd /d %WORKSHOP% && npm run dev"
 timeout /t 4 /nobreak >nul
 start http://localhost:5173
-echo   OK  Preview opened at localhost:5173
+echo   OK  Live preview opened at localhost:5173
 
-:: ── Login ────────────────────────────────────────────────────
+:: ── Copy first prompt to clipboard ─────────────────────────
+set FIRST_PROMPT=Read the file at %WORKSHOP%\%TEAM_DIR%\CLAUDE.md and then let's start building the %TEAM_NAME% module.
+echo %FIRST_PROMPT% | clip
+echo   OK  First prompt copied to clipboard -- just paste it into Claude Desktop
+
+:: ── Login ───────────────────────────────────────────────────
 echo.
-echo Almost done! Just need to log in to Claude.
-echo.
-echo   A browser tab will open -- sign in with your claude.ai account.
+echo Almost done! Sign in to Claude.
+echo A browser tab will open -- use your usual claude.ai account.
 echo.
 pause
-cd /d "%WORKSHOP%"
 claude login
 
-:: ── Done ────────────────────────────────────────────────────
+:: ── Done ───────────────────────────────────────────────────
+cls
 echo.
 echo   +==========================================+
-echo   ^|   All done! You're ready for the        ^|
-echo   ^|   workshop. See you on May 6th!          ^|
+echo   ^|   You're all set for the workshop!       ^|
 echo   +==========================================+
 echo.
-echo   Your live preview: http://localhost:5173
+echo   Team:    %TEAM_NAME%
+echo   Folder:  %WORKSHOP%\%TEAM_DIR%
+echo   Preview: http://localhost:5173
 echo.
-echo   On the day Vincent will tell you:
-echo   - Which team you're on
-echo   - What to type into Claude Desktop
+echo   On the day:
+echo   1. Open Claude Desktop
+echo   2. Paste your first prompt (already in clipboard!)
+echo   3. Watch the preview update as Claude builds
 echo.
 pause
