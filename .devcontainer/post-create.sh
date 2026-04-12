@@ -9,11 +9,11 @@ npm install
 
 # ── Playwright browsers ───────────────────────────────────
 echo "🎭 Installing Playwright (for site crawling demo)..."
-npx playwright install chromium --with-deps 2>/dev/null || echo "⚠ Playwright install skipped — will retry on first use"
+npx playwright install chromium --with-deps 2>/dev/null || echo "⚠ Playwright install skipped"
 
 # ── Claude Code ───────────────────────────────────────────
 echo "🤖 Installing Claude Code..."
-npm install -g @anthropic-ai/claude-code 2>/dev/null || echo "⚠ Claude Code install skipped — may already be present"
+npm install -g @anthropic-ai/claude-code 2>/dev/null || echo "⚠ Claude Code may already be present"
 
 # ── MCP config ────────────────────────────────────────────
 echo "🔌 Configuring MCP servers..."
@@ -27,8 +27,8 @@ cat > ~/.claude/settings.json << 'EOF'
       "args": [
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--supabase-url", "SUPABASE_URL_PLACEHOLDER",
-        "--supabase-api-key", "SUPABASE_KEY_PLACEHOLDER"
+        "--supabase-url", "https://beafagckgeidshnoikzg.supabase.co",
+        "--supabase-api-key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs"
       ]
     },
     "playwright": {
@@ -48,29 +48,26 @@ cat > ~/.claude/settings.json << 'EOF'
 EOF
 
 # ── Env file ──────────────────────────────────────────────
-if [ ! -f .env.local ]; then
-  cat > .env.local << 'EOF'
-VITE_SUPABASE_URL=SUPABASE_URL_PLACEHOLDER
-VITE_SUPABASE_ANON_KEY=SUPABASE_KEY_PLACEHOLDER
+cat > .env.local << 'EOF'
+VITE_SUPABASE_URL=https://beafagckgeidshnoikzg.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs
 EOF
-  echo "⚠  .env.local created — add real Supabase credentials before workshop"
-fi
 
 # ── Welcome message ───────────────────────────────────────
 cat >> ~/.bashrc << 'EOF'
 
-# Workshop welcome
 echo ""
 echo "╔══════════════════════════════════════════════╗"
 echo "║   🚀 Spendesk Rebuild Workshop               ║"
 echo "║                                              ║"
-echo "║   Type: claude                               ║"
-echo "║   Then: Read CLAUDE.md and let's build!      ║"
+echo "║   1. claude login  (first time only)         ║"
+echo "║   2. claude        (start building!)         ║"
 echo "╚══════════════════════════════════════════════╝"
 echo ""
 EOF
 
 echo ""
-echo "✅ Workshop environment ready!"
-echo "   → Open a terminal and type: claude"
+echo "✅ Environment ready!"
+echo "   → Type: claude login  (if first time)"
+echo "   → Then: claude"
 echo ""
