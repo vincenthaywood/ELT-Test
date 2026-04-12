@@ -1,76 +1,60 @@
 #!/bin/bash
-
-# ============================================================
+# =============================================================
 # SPENDESK WORKSHOP SETUP — MAC
-# Double-click this file to run it
-# ============================================================
-
-# Open in Terminal if not already
-cd "$(dirname "$0")/.."
-
+# Double-click this file in Finder to run
+# =============================================================
+cd "$(dirname "$0")"
 clear
-echo "============================================"
-echo "   Spendesk Rebuild Workshop — Mac Setup"
-echo "============================================"
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+echo ""
+echo -e "${BOLD}  ╔══════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}  ║   Spendesk Workshop — Mac Setup          ║${NC}"
+echo -e "${BOLD}  ╚══════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Helper functions ─────────────────────────────────────
-ok()   { echo "  ✅ $1"; }
-fail() { echo "  ❌ $1"; echo ""; echo "Something went wrong. Screenshot this and send to Vincent."; read -p "Press Enter to close..."; exit 1; }
-info() { echo "  ➜  $1"; }
-
-# ── Step 1: Check Node.js ─────────────────────────────────
-echo "Step 1 of 4 — Checking Node.js..."
-if command -v node &>/dev/null; then
-  NODE_VER=$(node --version)
-  ok "Node.js found ($NODE_VER)"
-else
-  echo ""
-  echo "  ❌ Node.js not found."
+# ── Node.js check ────────────────────────────────────────────
+echo -e "${YELLOW}[1/4]${NC} Checking Node.js..."
+if ! command -v node &>/dev/null; then
+  echo -e "${RED}  ✗ Node.js not found.${NC}"
   echo ""
   echo "  Please install it first:"
-  echo "  1. Go to https://nodejs.org"
-  echo "  2. Click the big green LTS button"
-  echo "  3. Run the installer"
-  echo "  4. Double-click this setup file again"
+  echo "  → Go to https://nodejs.org and click the LTS button"
+  echo "  → Run the installer, then double-click this file again"
   echo ""
-  read -p "Press Enter to open nodejs.org in your browser..."
   open https://nodejs.org
+  read -p "  Press Enter to close..."
   exit 1
 fi
+echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
 
-# ── Step 2: Install Claude Code ──────────────────────────
+# ── Claude Code ───────────────────────────────────────────────
 echo ""
-echo "Step 2 of 4 — Installing Claude Code..."
+echo -e "${YELLOW}[2/4]${NC} Installing Claude Code..."
 if command -v claude &>/dev/null; then
-  ok "Claude Code already installed ($(claude --version 2>/dev/null || echo 'ready'))"
+  echo -e "${GREEN}  ✓ Already installed${NC}"
 else
-  info "Installing Claude Code (takes ~30 seconds)..."
-  npm install -g @anthropic-ai/claude-code
+  npm install -g @anthropic-ai/claude-code --silent
   if command -v claude &>/dev/null; then
-    ok "Claude Code installed"
+    echo -e "${GREEN}  ✓ Claude Code installed${NC}"
   else
-    fail "Claude Code install failed. Try running in Terminal: npm install -g @anthropic-ai/claude-code"
+    echo -e "${RED}  ✗ Install failed. Try opening Terminal and running:${NC}"
+    echo "    npm install -g @anthropic-ai/claude-code"
+    read -p "  Press Enter to close..."
+    exit 1
   fi
 fi
 
-# ── Step 3: Login ─────────────────────────────────────────
+# ── MCP config ────────────────────────────────────────────────
 echo ""
-echo "Step 3 of 4 — Logging in to Claude..."
-echo ""
-echo "  A browser window will open. Sign in with your usual claude.ai account."
-echo ""
-read -p "  Press Enter when ready..."
-claude login
-echo ""
-ok "Claude login complete"
-
-# ── Step 4: Configure MCPs ───────────────────────────────
-echo ""
-echo "Step 4 of 4 — Configuring workshop tools (MCPs)..."
+echo -e "${YELLOW}[3/4]${NC} Configuring workshop tools..."
 mkdir -p ~/.claude
-
-cat > ~/.claude/settings.json << 'EOF'
+cat > ~/.claude/settings.json << 'MCPEOF'
 {
   "mcpServers": {
     "supabase": {
@@ -88,39 +72,71 @@ cat > ~/.claude/settings.json << 'EOF'
     },
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "$HOME/spendesk-workshop"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/$USER/spendesk-workshop"
+      ]
     }
   }
 }
-EOF
+MCPEOF
+echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
 
-ok "Workshop tools configured"
-
-# ── Step 5: Create workshop folder and install deps ──────
+# ── Workshop folder ───────────────────────────────────────────
 echo ""
-echo "Setting up workshop folder..."
-WORKSHOP_DIR="$HOME/spendesk-workshop"
-mkdir -p "$WORKSHOP_DIR"
+echo -e "${YELLOW}[4/4]${NC} Setting up your workshop folder..."
+WORKSHOP="$HOME/spendesk-workshop"
 
-# Copy repo files to workshop folder
-cp -r "$(dirname "$0")/.."/* "$WORKSHOP_DIR/" 2>/dev/null || true
+# Clone or update repo
+if [ -d "$WORKSHOP/.git" ]; then
+  echo "  Updating existing workshop folder..."
+  cd "$WORKSHOP" && git pull --quiet
+else
+  echo "  Downloading workshop files..."
+  git clone https://github.com/vincenthaywood/ELT-Test.git "$WORKSHOP" --quiet 2>/dev/null
+fi
 
-# Install npm deps
-cd "$WORKSHOP_DIR"
-npm install --silent 2>/dev/null || true
+# Install dependencies
+cd "$WORKSHOP"
+npm install --silent 2>/dev/null
+echo -e "${GREEN}  ✓ Workshop folder ready${NC}"
 
-ok "Workshop folder ready at ~/spendesk-workshop"
+# ── Start dev server in background ───────────────────────────
+echo ""
+echo "  Starting live preview..."
+npm run dev &>/dev/null &
+DEV_PID=$!
+echo $DEV_PID > /tmp/workshop-dev.pid
 
-# ── Done ─────────────────────────────────────────────────
+# Give Vite a moment to start
+sleep 3
+
+# Open browser
+open http://localhost:5173
+echo -e "${GREEN}  ✓ Preview opened at localhost:5173${NC}"
+
+# ── Login ──────────────────────────────────────────────────────
 echo ""
-echo "============================================"
-echo "   ✅ You're all set for the workshop!"
-echo "============================================"
+echo -e "${YELLOW}Almost done!${NC} Just need to log in to Claude."
 echo ""
-echo "  On the day, Vincent will tell you which"
-echo "  team you're on and what to type."
+echo "  A browser tab will open — sign in with your claude.ai account."
 echo ""
-echo "  Your workshop folder is at:"
-echo "  ~/spendesk-workshop"
+read -p "  Press Enter when ready..."
+cd "$WORKSHOP"
+claude login
+
+# ── Done ──────────────────────────────────────────────────────
 echo ""
-read -p "Press Enter to close..."
+echo -e "${GREEN}${BOLD}  ╔══════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}${BOLD}  ║   ✓  You're all set for the workshop!   ║${NC}"
+echo -e "${GREEN}${BOLD}  ╚══════════════════════════════════════════╝${NC}"
+echo ""
+echo "  Your live preview is running at:"
+echo -e "  ${BOLD}http://localhost:5173${NC}"
+echo ""
+echo "  On the day Vincent will tell you:"
+echo "  - Which team you're on"
+echo "  - What to type into Claude Desktop"
+echo ""
+read -p "  Press Enter to close this window..."

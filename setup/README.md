@@ -1,25 +1,33 @@
-# Workshop Setup
+# Workshop Setup — Instructions
 
-## Mac users
-1. Download / unzip the workshop folder
-2. Open the `setup/` folder
-3. Double-click `mac-setup.command`
-4. If you see a security warning: right-click → Open → Open anyway
-5. Follow the prompts — it takes about 2 minutes
+## Before the workshop (takes 5 minutes)
 
-## Windows users
-1. Download / unzip the workshop folder
-2. Open the `setup/` folder
-3. Double-click `windows-setup.bat`
-4. If Windows Defender appears: click "More info" → "Run anyway"
-5. Follow the prompts — it takes about 2 minutes
+### Mac
+1. Unzip the workshop folder
+2. Open the `setup` folder
+3. Double-click **`mac-setup.command`**
+4. If macOS blocks it: right-click → Open → Open Anyway
+5. Follow the prompts
+
+### Windows
+1. Unzip the workshop folder
+2. Open the `setup` folder
+3. Double-click **`windows-setup.bat`**
+4. If Windows Defender appears: More info → Run anyway
+5. Follow the prompts
 
 ## What it does
-- Checks Node.js is installed (tells you if not)
-- Installs Claude Code
+- Installs Claude Code (the bit that lets Claude write files on your machine)
 - Logs you in with your claude.ai account
-- Configures the workshop database connection
-- Sets up your workshop folder
+- Connects to the shared workshop database
+- Downloads the workshop files to `~/spendesk-workshop`
+- Opens a live preview at **http://localhost:5173** — this updates automatically as Claude builds
+
+## On the day
+1. Open **Claude Desktop** (you already use this)
+2. Your live preview is at **http://localhost:5173** — keep it open in your browser
+3. Vincent will tell you which team you're on and give you your first prompt
+4. Type it into Claude Desktop and watch the preview update in real time
 
 ## Problems?
-Screenshot the terminal and send to Vincent on Slack.
+Screenshot the terminal window and send to Vincent on Slack.
