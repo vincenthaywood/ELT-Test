@@ -1,19 +1,14 @@
 #!/bin/bash
-set -e
 
-echo "🚀 Setting up Spendesk Rebuild Workshop environment..."
+echo "🚀 Setting up Spendesk Rebuild Workshop..."
 
 # ── Dependencies ──────────────────────────────────────────
 echo "📦 Installing project dependencies..."
-npm install
-
-# ── Playwright browsers ───────────────────────────────────
-echo "🎭 Installing Playwright (for site crawling demo)..."
-npx playwright install chromium --with-deps 2>/dev/null || echo "⚠ Playwright install skipped"
+npm install --silent
 
 # ── Claude Code ───────────────────────────────────────────
 echo "🤖 Installing Claude Code..."
-npm install -g @anthropic-ai/claude-code 2>/dev/null || echo "⚠ Claude Code may already be present"
+npm install -g @anthropic-ai/claude-code --silent 2>/dev/null || echo "⚠ Claude Code install issue — try: npm install -g @anthropic-ai/claude-code"
 
 # ── MCP config ────────────────────────────────────────────
 echo "🔌 Configuring MCP servers..."
@@ -53,6 +48,10 @@ VITE_SUPABASE_URL=https://beafagckgeidshnoikzg.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs
 EOF
 
+# ── Playwright — install in background, don't block ───────
+echo "🎭 Installing Playwright in background (non-blocking)..."
+(npx playwright install chromium 2>/dev/null && echo "✅ Playwright ready") &
+
 # ── Welcome message ───────────────────────────────────────
 cat >> ~/.bashrc << 'EOF'
 
@@ -67,7 +66,7 @@ echo ""
 EOF
 
 echo ""
-echo "✅ Environment ready!"
-echo "   → Type: claude login  (if first time)"
+echo "✅ Workshop environment ready!"
+echo "   → Type: claude login"
 echo "   → Then: claude"
 echo ""
