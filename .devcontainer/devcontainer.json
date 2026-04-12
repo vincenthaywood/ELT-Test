@@ -1,0 +1,42 @@
+{
+  "name": "Spendesk Rebuild Workshop",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "forwardPorts": [3000, 5173],
+  "portsAttributes": {
+    "3000": { "label": "App Preview", "onAutoForward": "openBrowser" },
+    "5173": { "label": "Vite Dev Server", "onAutoForward": "openBrowser" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ],
+      "settings": {
+        "workbench.activityBar.visible": false,
+        "workbench.statusBar.visible": true,
+        "workbench.sideBar.location": "left",
+        "editor.minimap.enabled": false,
+        "editor.fontSize": 14,
+        "editor.lineHeight": 1.6,
+        "editor.wordWrap": "on",
+        "editor.tabSize": 2,
+        "explorer.openEditors.visible": 0,
+        "workbench.editor.showTabs": "single",
+        "workbench.startupEditor": "none",
+        "terminal.integrated.fontSize": 13,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "breadcrumbs.enabled": false,
+        "editor.scrollBeyondLastLine": false,
+        "workbench.colorTheme": "Default Dark Modern"
+      }
+    }
+  },
+
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  }
+}
