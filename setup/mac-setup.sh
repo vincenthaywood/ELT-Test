@@ -20,23 +20,53 @@ echo -e "  ║   Spendesk Workshop — Mac Setup          ║"
 echo -e "  ╚══════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Find Node + npm ───────────────────────────────────────────
-export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:$PATH"
+# ── Expand PATH to cover all common Node locations ────────────
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/opt/local/bin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
 
-NPM_PATH=$(which npm 2>/dev/null)
+# ── Install Homebrew + Node if needed ────────────────────────
+echo -e "${YELLOW}[1/4]${NC} Checking Node.js..."
+
 NODE_PATH=$(which node 2>/dev/null)
+NPM_PATH=$(which npm 2>/dev/null)
 
-if [ -z "$NPM_PATH" ]; then
-  echo -e "${RED}  ✗ Node.js not found.${NC}"
-  echo "  Please install from https://nodejs.org then run this again."
-  exit 1
+if [ -z "$NODE_PATH" ]; then
+  echo -e "${YELLOW}  Node.js not found — installing via Homebrew...${NC}"
+
+  # Install Homebrew if not present
+  if ! command -v brew &>/dev/null; then
+    echo "  Installing Homebrew first (you may be asked for your Mac password)..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Add Homebrew to PATH for this session
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+      export PATH="/opt/homebrew/bin:$PATH"   # M1/M2/M3/M4/M5
+    else
+      export PATH="/usr/local/bin:$PATH"       # Intel
+    fi
+  fi
+
+  echo "  Installing Node.js via Homebrew..."
+  brew install node --quiet
+
+  # Reload PATH
+  export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+  NODE_PATH=$(which node 2>/dev/null)
+  NPM_PATH=$(which npm 2>/dev/null)
+
+  if [ -n "$NODE_PATH" ]; then
+    echo -e "${GREEN}  ✓ Node.js $(node --version) installed${NC}"
+  else
+    echo -e "${RED}  ✗ Node.js install failed.${NC}"
+    echo "  Please install manually from https://nodejs.org and run this again."
+    exit 1
+  fi
+else
+  echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
 fi
-
-echo -e "${GREEN}  ✓ Node.js found: $NODE_PATH${NC}"
 
 # ── Team selection ────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[1/4]${NC} ${BOLD}Which team are you on?${NC}"
+echo -e "${YELLOW}[2/4]${NC} ${BOLD}Which team are you on?${NC}"
 echo ""
 echo -e "  ${CYAN}1)${NC} Cards"
 echo -e "  ${CYAN}2)${NC} Expenses"
@@ -63,10 +93,8 @@ esac
 echo -e "${GREEN}  ✓ Team ${BOLD}$TEAM_NAME${NC}"
 
 # ── Install MCP packages globally ────────────────────────────
-# Pre-installing avoids npx download-on-demand which gets blocked
-# by macOS Gatekeeper when launched from Claude Desktop
 echo ""
-echo -e "${YELLOW}[2/4]${NC} Installing workshop tools (takes ~1 min)..."
+echo -e "${YELLOW}[3/4]${NC} Installing workshop tools (takes ~1 min)..."
 
 "$NPM_PATH" install -g \
   @supabase/mcp-server-supabase \
@@ -74,28 +102,25 @@ echo -e "${YELLOW}[2/4]${NC} Installing workshop tools (takes ~1 min)..."
   @modelcontextprotocol/server-filesystem \
   --silent 2>/dev/null
 
-# Find the installed binary locations
+# Find installed binary paths
 NPM_PREFIX=$("$NPM_PATH" config get prefix 2>/dev/null)
 NPM_BIN="$NPM_PREFIX/bin"
+NPX_PATH="$NPM_BIN/npx"
+[ ! -f "$NPX_PATH" ] && NPX_PATH=$(which npx 2>/dev/null)
 
-# Locate each binary
 SUPABASE_BIN="$NPM_BIN/mcp-server-supabase"
 PLAYWRIGHT_BIN="$NPM_BIN/mcp-server-playwright"
 FILESYSTEM_BIN="$NPM_BIN/mcp-server-filesystem"
 
-# Fallback — some packages use different binary names
-[ ! -f "$SUPABASE_BIN" ]   && SUPABASE_BIN=$(which mcp-server-supabase 2>/dev/null)
-[ ! -f "$PLAYWRIGHT_BIN" ] && PLAYWRIGHT_BIN=$(which mcp-server-playwright 2>/dev/null)
-[ ! -f "$FILESYSTEM_BIN" ] && FILESYSTEM_BIN=$(which mcp-server-filesystem 2>/dev/null)
-
-# If binaries still not found, fall back to node -e runner via full npm path
-NPX_PATH=$(which npx 2>/dev/null || echo "$NPM_BIN/npx")
+[ ! -f "$SUPABASE_BIN" ]   && SUPABASE_BIN=$(which mcp-server-supabase 2>/dev/null || echo "$NPX_PATH")
+[ ! -f "$PLAYWRIGHT_BIN" ] && PLAYWRIGHT_BIN=$(which mcp-server-playwright 2>/dev/null || echo "$NPX_PATH")
+[ ! -f "$FILESYSTEM_BIN" ] && FILESYSTEM_BIN=$(which mcp-server-filesystem 2>/dev/null || echo "$NPX_PATH")
 
 echo -e "${GREEN}  ✓ Tools installed${NC}"
 
-# ── Create folder + download files ───────────────────────────
+# ── Download workshop files ───────────────────────────────────
 echo ""
-echo -e "${YELLOW}[3/4]${NC} Setting up workshop folder..."
+echo -e "${YELLOW}[4/4]${NC} Setting up workshop folder + configuring Claude Desktop..."
 
 WORKSHOP="$HOME/spendesk-workshop/$TEAM_DIR"
 SHARED="$HOME/spendesk-workshop/shared"
@@ -110,30 +135,27 @@ curl -fsSL "$REPO/design-system/tokens.css" -o "$DESIGN/tokens.css"
 
 echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop/$TEAM_DIR${NC}"
 
-# ── Write MCP config for Claude Desktop ──────────────────────
-echo ""
-echo -e "${YELLOW}[4/4]${NC} Configuring Claude Desktop..."
-
+# ── Write Claude Desktop MCP config ──────────────────────────
 mkdir -p "$HOME/Library/Application Support/Claude"
 
-# Use installed binaries if found, otherwise fall back to npx with full path
-if [ -f "$SUPABASE_BIN" ]; then
+# Build args based on whether we have installed binaries or need npx fallback
+if [ -f "$SUPABASE_BIN" ] && [ "$SUPABASE_BIN" != "$NPX_PATH" ]; then
   SUPABASE_CMD="$SUPABASE_BIN"
   SUPABASE_ARGS="[\"--supabase-url\", \"https://beafagckgeidshnoikzg.supabase.co\", \"--supabase-api-key\", \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs\"]"
 else
   SUPABASE_CMD="$NPX_PATH"
-  SUPABASE_ARGS="[\"-y\", \"@supabase/mcp-server-supabase@latest\", \"--supabase-url\", \"https://beafagckgeidshnoikzg.supabase.co\", \"--supabase-api-key\", \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs\"]"
+  SUPABASE_ARGS="[\"-y\", \"@supabase/mcp-server-supabase\", \"--supabase-url\", \"https://beafagckgeidshnoikzg.supabase.co\", \"--supabase-api-key\", \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs\"]"
 fi
 
-if [ -f "$PLAYWRIGHT_BIN" ]; then
+if [ -f "$PLAYWRIGHT_BIN" ] && [ "$PLAYWRIGHT_BIN" != "$NPX_PATH" ]; then
   PLAYWRIGHT_CMD="$PLAYWRIGHT_BIN"
   PLAYWRIGHT_ARGS="[\"--headless\"]"
 else
   PLAYWRIGHT_CMD="$NPX_PATH"
-  PLAYWRIGHT_ARGS="[\"-y\", \"@playwright/mcp@latest\", \"--headless\"]"
+  PLAYWRIGHT_ARGS="[\"-y\", \"@playwright/mcp\", \"--headless\"]"
 fi
 
-if [ -f "$FILESYSTEM_BIN" ]; then
+if [ -f "$FILESYSTEM_BIN" ] && [ "$FILESYSTEM_BIN" != "$NPX_PATH" ]; then
   FILESYSTEM_CMD="$FILESYSTEM_BIN"
   FILESYSTEM_ARGS="[\"$HOME/spendesk-workshop\"]"
 else
