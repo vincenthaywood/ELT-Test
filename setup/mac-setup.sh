@@ -10,6 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 BOLD='\033[1m'
 CYAN='\033[0;36m'
+REPO="https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main"
 
 echo ""
 echo -e "${BOLD}  ╔══════════════════════════════════════════╗"
@@ -44,14 +45,29 @@ esac
 
 echo -e "${GREEN}  ✓ Team ${BOLD}$TEAM_NAME${NC}"
 
-# ── Create team folder ────────────────────────────────────────
+# ── Create folder + download files ───────────────────────────
 echo ""
-echo -e "${YELLOW}[2/3]${NC} Creating workshop folder..."
+echo -e "${YELLOW}[2/3]${NC} Setting up workshop folder..."
 
 WORKSHOP="$HOME/spendesk-workshop/$TEAM_DIR"
-mkdir -p "$WORKSHOP"
+SHARED="$HOME/spendesk-workshop/shared"
+DESIGN="$HOME/spendesk-workshop/design-system"
+
+mkdir -p "$WORKSHOP" "$SHARED" "$DESIGN"
+
+# Team CLAUDE.md
+curl -fsSL "$REPO/$TEAM_DIR/CLAUDE.md" -o "$WORKSHOP/CLAUDE.md"
+
+# Shared files Claude Desktop needs
+curl -fsSL "$REPO/shared/supabase.js"   -o "$SHARED/supabase.js"
+curl -fsSL "$REPO/shared/auth.js"       -o "$SHARED/auth.js"
+curl -fsSL "$REPO/shared/mock-data.json" -o "$SHARED/mock-data.json" 2>/dev/null || true
+
+# Design system
+curl -fsSL "$REPO/design-system/tokens.css" -o "$DESIGN/tokens.css"
 
 echo -e "${GREEN}  ✓ Folder ready: ~/spendesk-workshop/$TEAM_DIR${NC}"
+echo -e "${GREEN}  ✓ CLAUDE.md, shared files and design system downloaded${NC}"
 
 # ── Write MCP config ──────────────────────────────────────────
 echo ""
@@ -80,7 +96,7 @@ cat > ~/.claude/settings.json << MCPEOF
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "$HOME/spendesk-workshop/$TEAM_DIR"
+        "$HOME/spendesk-workshop"
       ]
     }
   }
@@ -90,7 +106,7 @@ MCPEOF
 echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
 
 # ── Copy first prompt to clipboard ────────────────────────────
-FIRST_PROMPT="My working folder is $HOME/spendesk-workshop/$TEAM_DIR — all files go there. I am on the $TEAM_NAME team. Read the context at https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main/$TEAM_DIR/CLAUDE.md and then let's start building."
+FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — write all files there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md and then let's start building."
 echo "$FIRST_PROMPT" | pbcopy
 
 # ── Done ──────────────────────────────────────────────────────
