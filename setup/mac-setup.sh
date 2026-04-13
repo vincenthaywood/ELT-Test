@@ -12,6 +12,9 @@ BOLD='\033[1m'
 CYAN='\033[0;36m'
 REPO="https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main"
 
+# Claude Desktop MCP config — this is the correct location on Mac
+CLAUDE_DESKTOP_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+
 echo ""
 echo -e "${BOLD}  ╔══════════════════════════════════════════╗"
 echo -e "  ║   Spendesk Workshop — Mac Setup          ║"
@@ -55,20 +58,21 @@ DESIGN="$HOME/spendesk-workshop/design-system"
 
 mkdir -p "$WORKSHOP" "$SHARED" "$DESIGN"
 
-curl -fsSL "$REPO/$TEAM_DIR/CLAUDE.md"       -o "$WORKSHOP/CLAUDE.md"
-curl -fsSL "$REPO/shared/supabase.js"        -o "$SHARED/supabase.js"
-curl -fsSL "$REPO/shared/auth.js"            -o "$SHARED/auth.js"
-curl -fsSL "$REPO/design-system/tokens.css"  -o "$DESIGN/tokens.css"
+curl -fsSL "$REPO/$TEAM_DIR/CLAUDE.md"      -o "$WORKSHOP/CLAUDE.md"
+curl -fsSL "$REPO/shared/supabase.js"       -o "$SHARED/supabase.js"
+curl -fsSL "$REPO/shared/auth.js"           -o "$SHARED/auth.js"
+curl -fsSL "$REPO/design-system/tokens.css" -o "$DESIGN/tokens.css"
 
 echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop/$TEAM_DIR${NC}"
 
-# ── Write MCP config ──────────────────────────────────────────
+# ── Write MCP config for Claude Desktop ──────────────────────
 echo ""
-echo -e "${YELLOW}[3/3]${NC} Configuring workshop tools..."
+echo -e "${YELLOW}[3/3]${NC} Configuring Claude Desktop tools..."
 
-mkdir -p ~/.claude
+# Create the Claude Desktop config directory if it doesn't exist
+mkdir -p "$HOME/Library/Application Support/Claude"
 
-cat > ~/.claude/settings.json << MCPEOF
+cat > "$CLAUDE_DESKTOP_CONFIG" << MCPEOF
 {
   "mcpServers": {
     "supabase": {
@@ -97,6 +101,7 @@ cat > ~/.claude/settings.json << MCPEOF
 MCPEOF
 
 echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
+echo -e "  ${CYAN}(Written to Claude Desktop config)${NC}"
 
 # ── Copy first prompt to clipboard ────────────────────────────
 FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — all files go there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md to understand the context. Then ask me to log in to Spendesk so you can explore the $SPENDESK_SECTION section before we build anything."
@@ -112,8 +117,11 @@ echo -e "  Team:    ${BOLD}$TEAM_NAME${NC}"
 echo -e "  Section: ${CYAN}$SPENDESK_SECTION${NC}"
 echo -e "  Folder:  ${CYAN}~/spendesk-workshop/$TEAM_DIR${NC}"
 echo ""
+echo -e "${YELLOW}  ⚠  Important: Quit and reopen Claude Desktop${NC}"
+echo "     so it picks up the new tools."
+echo ""
 echo -e "  ${BOLD}On the day:${NC}"
-echo "  1. Open Claude Desktop"
+echo "  1. Quit and reopen Claude Desktop"
 echo "  2. Press Cmd+V to paste your first prompt"
 echo "  3. Claude will ask you to log in to Spendesk"
 echo "  4. It explores your section, shows you what it found"
