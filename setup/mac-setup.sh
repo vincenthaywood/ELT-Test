@@ -18,21 +18,40 @@ echo -e "  ║   Spendesk Workshop — Mac Setup          ║"
 echo -e "  ╚══════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Node.js check ───────────────────────────────────────────
+# ── Node.js ───────────────────────────────────────────────────
 echo -e "${YELLOW}[1/5]${NC} Checking Node.js..."
 if ! command -v node &>/dev/null; then
-  echo -e "${RED}  ✗ Node.js not found.${NC}"
-  echo ""
-  echo "  Please install it first:"
-  echo "  → Go to https://nodejs.org and click the LTS button"
-  echo "  → Run the installer, then paste this command again"
-  echo ""
-  open https://nodejs.org 2>/dev/null || true
-  exit 1
-fi
-echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
+  echo -e "${YELLOW}  Node.js not found — installing automatically...${NC}"
 
-# ── Claude Code ───────────────────────────────────────────
+  ARCH=$(uname -m)
+  if [ "$ARCH" = "arm64" ]; then
+    NODE_PKG="node-v20.11.1-darwin-arm64.pkg"
+  else
+    NODE_PKG="node-v20.11.1-darwin-x64.pkg"
+  fi
+
+  TMP_PKG="/tmp/$NODE_PKG"
+  echo "  Downloading Node.js (~30MB)..."
+  curl -fsSL "https://nodejs.org/dist/v20.11.1/$NODE_PKG" -o "$TMP_PKG"
+
+  echo "  Installing (you may be asked for your Mac password)..."
+  sudo installer -pkg "$TMP_PKG" -target / > /dev/null 2>&1
+  rm -f "$TMP_PKG"
+
+  export PATH="/usr/local/bin:/usr/bin:$PATH"
+
+  if command -v node &>/dev/null; then
+    echo -e "${GREEN}  ✓ Node.js $(node --version) installed${NC}"
+  else
+    echo -e "${RED}  ✗ Auto-install failed.${NC}"
+    echo "  Please install manually from https://nodejs.org then paste the setup command again."
+    exit 1
+  fi
+else
+  echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
+fi
+
+# ── Claude Code ───────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}[2/5]${NC} Installing Claude Code..."
 if command -v claude &>/dev/null; then
@@ -47,7 +66,7 @@ else
   fi
 fi
 
-# ── Team selection ─────────────────────────────────────────
+# ── Team selection ────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}[3/5]${NC} ${BOLD}Which team are you on?${NC}"
 echo ""
@@ -75,7 +94,7 @@ esac
 
 echo -e "${GREEN}  ✓ Team ${BOLD}$TEAM_NAME${NC}${GREEN} selected${NC}"
 
-# ── MCP config ───────────────────────────────────────────────
+# ── MCP config ────────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}[4/5]${NC} Configuring workshop tools..."
 mkdir -p ~/.claude
@@ -111,7 +130,7 @@ MCPEOF
 
 echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem ready${NC}"
 
-# ── Clone repo + install deps ───────────────────────────────────
+# ── Clone repo + install deps ─────────────────────────────────
 echo ""
 echo -e "${YELLOW}[5/5]${NC} Downloading workshop files..."
 
@@ -123,21 +142,21 @@ fi
 
 cd "$WORKSHOP"
 npm install --silent 2>/dev/null
-echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop${NC}"
+echo -e "${GREEN}  ✓ Files ready${NC}"
 
-# ── Start dev server ─────────────────────────────────────────
+# ── Start dev server ──────────────────────────────────────────
 npm run dev &>/dev/null &
 echo $! > /tmp/workshop-dev.pid
 sleep 3
 open http://localhost:5173
 echo -e "${GREEN}  ✓ Live preview opened at localhost:5173${NC}"
 
-# ── Copy first prompt to clipboard ───────────────────────
+# ── Copy first prompt to clipboard ────────────────────────────
 FIRST_PROMPT="Read the file at $WORKSHOP/$TEAM_DIR/CLAUDE.md and then let's start building the $TEAM_NAME module."
 echo "$FIRST_PROMPT" | pbcopy
-echo -e "${GREEN}  ✓ Your first prompt copied to clipboard${NC}"
+echo -e "${GREEN}  ✓ First prompt copied to clipboard${NC}"
 
-# ── Login ────────────────────────────────────────────────────
+# ── Login ─────────────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}Almost done!${NC} One last step — sign in to Claude."
 echo ""
@@ -146,7 +165,7 @@ echo ""
 read -p "  Press Enter when ready..."
 claude login
 
-# ── Done ────────────────────────────────────────────────────
+# ── Done ──────────────────────────────────────────────────────
 clear
 echo ""
 echo -e "${GREEN}${BOLD}  ╔══════════════════════════════════════════╗"
