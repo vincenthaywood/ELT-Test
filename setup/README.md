@@ -1,33 +1,41 @@
-# Workshop Setup — Instructions
+# Workshop Setup
 
-## Before the workshop (takes 5 minutes)
+## Mac
 
-### Mac
-1. Unzip the workshop folder
-2. Open the `setup` folder
-3. Double-click **`mac-setup.command`**
-4. If macOS blocks it: right-click → Open → Open Anyway
-5. Follow the prompts
+Open **Terminal** (press Cmd+Space, type Terminal, hit Enter) and paste this:
 
-### Windows
-1. Unzip the workshop folder
+```
+curl -fsSL https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main/setup/mac-setup.sh | bash
+```
+
+It will ask which team you're on, then do everything automatically.
+Takes about 2 minutes.
+
+---
+
+## Windows
+
+1. Download and unzip the workshop folder
 2. Open the `setup` folder
 3. Double-click **`windows-setup.bat`**
 4. If Windows Defender appears: More info → Run anyway
-5. Follow the prompts
+
+---
 
 ## What it does
-- Installs Claude Code (the bit that lets Claude write files on your machine)
+- Checks Node.js is installed
+- Installs Claude Code
+- Asks which team you're on
+- Configures the workshop database connection
+- Downloads the workshop files
+- Opens a live preview at **http://localhost:5173**
+- Copies your first prompt to clipboard
 - Logs you in with your claude.ai account
-- Connects to the shared workshop database
-- Downloads the workshop files to `~/spendesk-workshop`
-- Opens a live preview at **http://localhost:5173** — this updates automatically as Claude builds
 
 ## On the day
-1. Open **Claude Desktop** (you already use this)
-2. Your live preview is at **http://localhost:5173** — keep it open in your browser
-3. Vincent will tell you which team you're on and give you your first prompt
-4. Type it into Claude Desktop and watch the preview update in real time
+1. Open **Claude Desktop**
+2. Press **Cmd+V** (Mac) or **Ctrl+V** (Windows) to paste your first prompt
+3. Watch the preview at **http://localhost:5173** update in real time
 
 ## Problems?
-Screenshot the terminal window and send to Vincent on Slack.
+Screenshot the terminal and send to Vincent on Slack.
