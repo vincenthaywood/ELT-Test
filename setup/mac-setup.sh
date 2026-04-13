@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================
 # SPENDESK WORKSHOP SETUP — MAC
-# Run via: curl -fsSL https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main/setup/mac-setup.sh | bash
+# Run via: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main/setup/mac-setup.sh)"
 # =============================================================
 clear
 
@@ -21,59 +21,53 @@ echo ""
 # ── Node.js ───────────────────────────────────────────────────
 echo -e "${YELLOW}[1/5]${NC} Checking Node.js..."
 
-# Load full PATH — curl|bash strips a lot of locations
-export PATH="/usr/local/bin:/usr/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
+# Expand PATH to cover all common install locations
+export PATH="/usr/local/bin:/usr/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
 
-# Find node wherever it might be
-NODE_BIN=$(which node 2>/dev/null || ls /usr/local/bin/node /opt/homebrew/bin/node /opt/local/bin/node 2>/dev/null | head -1)
+NODE_BIN=$(which node 2>/dev/null)
 
 if [ -z "$NODE_BIN" ]; then
-  echo -e "${YELLOW}  Node.js not found — installing automatically...${NC}"
+  echo -e "${YELLOW}  Node.js not found — installing via NVM...${NC}"
 
-  ARCH=$(uname -m)
-  if [ "$ARCH" = "arm64" ]; then
-    NODE_PKG="node-v20.11.1-darwin-arm64.pkg"
-  else
-    NODE_PKG="node-v20.11.1-darwin-x64.pkg"
-  fi
+  # Install NVM
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
-  TMP_PKG="/tmp/$NODE_PKG"
-  echo "  Downloading Node.js (~30MB)..."
-  curl -fsSL "https://nodejs.org/dist/v20.11.1/$NODE_PKG" -o "$TMP_PKG"
+  # Load NVM immediately without restarting terminal
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
-  echo "  Installing (you may be asked for your Mac password)..."
-  sudo installer -pkg "$TMP_PKG" -target / > /dev/null 2>&1
-  rm -f "$TMP_PKG"
+  # Install Node LTS
+  nvm install --lts --silent
+  nvm use --lts --silent
 
-  # Reload PATH after install
-  export PATH="/usr/local/bin:/usr/bin:$PATH"
   NODE_BIN=$(which node 2>/dev/null)
 
   if [ -n "$NODE_BIN" ]; then
-    echo -e "${GREEN}  ✓ Node.js $($NODE_BIN --version) installed${NC}"
+    echo -e "${GREEN}  ✓ Node.js $(node --version) installed${NC}"
   else
-    echo -e "${RED}  ✗ Auto-install failed.${NC}"
-    echo "  Please install manually from https://nodejs.org then paste the setup command again."
+    echo -e "${RED}  ✗ Auto-install failed. Please install from https://nodejs.org and run this command again.${NC}"
     exit 1
   fi
 else
-  echo -e "${GREEN}  ✓ Node.js $($NODE_BIN --version)${NC}"
+  echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
 fi
 
-# Make sure npm is on PATH too
-NPM_BIN=$(dirname "$NODE_BIN")/npm
+NPM_BIN=$(which npm 2>/dev/null)
 
 # ── Claude Code ───────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}[2/5]${NC} Installing Claude Code..."
-CLAUDE_BIN=$(which claude 2>/dev/null || ls /usr/local/bin/claude "$HOME/.npm-global/bin/claude" 2>/dev/null | head -1)
+
+export PATH="$HOME/.npm-global/bin:$(npm config get prefix 2>/dev/null)/bin:$PATH"
+CLAUDE_BIN=$(which claude 2>/dev/null)
 
 if [ -n "$CLAUDE_BIN" ]; then
   echo -e "${GREEN}  ✓ Already installed${NC}"
 else
   echo "  Installing (takes ~30 seconds)..."
-  "$NPM_BIN" install -g @anthropic-ai/claude-code --silent
-  export PATH="/usr/local/bin:$HOME/.npm-global/bin:$PATH"
+  npm install -g @anthropic-ai/claude-code --silent 2>/dev/null
+  export PATH="$(npm config get prefix 2>/dev/null)/bin:$PATH"
   CLAUDE_BIN=$(which claude 2>/dev/null)
 
   if [ -n "$CLAUDE_BIN" ]; then
@@ -159,11 +153,11 @@ else
 fi
 
 cd "$WORKSHOP"
-"$NPM_BIN" install --silent 2>/dev/null
+npm install --silent 2>/dev/null
 echo -e "${GREEN}  ✓ Files ready${NC}"
 
 # ── Start dev server ──────────────────────────────────────────
-"$NPM_BIN" run dev &>/dev/null &
+npm run dev &>/dev/null &
 echo $! > /tmp/workshop-dev.pid
 sleep 3
 open http://localhost:5173
@@ -181,7 +175,7 @@ echo ""
 echo "  A browser tab will open. Use your usual claude.ai account."
 echo ""
 read -p "  Press Enter when ready..."
-"$CLAUDE_BIN" login
+claude login
 
 # ── Done ──────────────────────────────────────────────────────
 clear
