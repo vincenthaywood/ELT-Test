@@ -11,8 +11,6 @@ NC='\033[0m'
 BOLD='\033[1m'
 CYAN='\033[0;36m'
 REPO="https://raw.githubusercontent.com/vincenthaywood/ELT-Test/main"
-
-# Claude Desktop MCP config — this is the correct location on Mac
 CLAUDE_DESKTOP_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 
 echo ""
@@ -21,7 +19,21 @@ echo -e "  ║   Spendesk Workshop — Mac Setup          ║"
 echo -e "  ╚══════════════════════════════════════════╝${NC}"
 echo ""
 
+# ── Find npx — Claude Desktop needs the full path ────────────
+# Claude Desktop launches with a stripped PATH so 'npx' alone won't work
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:$PATH"
+NPX_PATH=$(which npx 2>/dev/null)
+
+if [ -z "$NPX_PATH" ]; then
+  echo -e "${YELLOW}  npx not found — Node.js may not be installed.${NC}"
+  echo "  Please install Node.js from https://nodejs.org then run this again."
+  exit 1
+fi
+
+echo -e "${GREEN}  ✓ Found npx at $NPX_PATH${NC}"
+
 # ── Team selection ────────────────────────────────────────────
+echo ""
 echo -e "${YELLOW}[1/3]${NC} ${BOLD}Which team are you on?${NC}"
 echo ""
 echo -e "  ${CYAN}1)${NC} Cards"
@@ -69,14 +81,14 @@ echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop/$TEAM_DIR${NC}"
 echo ""
 echo -e "${YELLOW}[3/3]${NC} Configuring Claude Desktop tools..."
 
-# Create the Claude Desktop config directory if it doesn't exist
 mkdir -p "$HOME/Library/Application Support/Claude"
 
+# Use the detected full path to npx so Claude Desktop can find it
 cat > "$CLAUDE_DESKTOP_CONFIG" << MCPEOF
 {
   "mcpServers": {
     "supabase": {
-      "command": "npx",
+      "command": "$NPX_PATH",
       "args": [
         "-y",
         "@supabase/mcp-server-supabase@latest",
@@ -85,11 +97,11 @@ cat > "$CLAUDE_DESKTOP_CONFIG" << MCPEOF
       ]
     },
     "playwright": {
-      "command": "npx",
+      "command": "$NPX_PATH",
       "args": ["-y", "@playwright/mcp@latest", "--headless"]
     },
     "filesystem": {
-      "command": "npx",
+      "command": "$NPX_PATH",
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
@@ -101,7 +113,7 @@ cat > "$CLAUDE_DESKTOP_CONFIG" << MCPEOF
 MCPEOF
 
 echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
-echo -e "  ${CYAN}(Written to Claude Desktop config)${NC}"
+echo -e "  ${CYAN}Using npx at: $NPX_PATH${NC}"
 
 # ── Copy first prompt to clipboard ────────────────────────────
 FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — all files go there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md to understand the context. Then ask me to log in to Spendesk so you can explore the $SPENDESK_SECTION section before we build anything."
@@ -117,7 +129,7 @@ echo -e "  Team:    ${BOLD}$TEAM_NAME${NC}"
 echo -e "  Section: ${CYAN}$SPENDESK_SECTION${NC}"
 echo -e "  Folder:  ${CYAN}~/spendesk-workshop/$TEAM_DIR${NC}"
 echo ""
-echo -e "${YELLOW}  ⚠  Important: Quit and reopen Claude Desktop${NC}"
+echo -e "${YELLOW}  ⚠  Quit and reopen Claude Desktop now${NC}"
 echo "     so it picks up the new tools."
 echo ""
 echo -e "  ${BOLD}On the day:${NC}"
