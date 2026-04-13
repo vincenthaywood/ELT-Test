@@ -1,47 +1,57 @@
 # Team Analytics — Workshop Context
 
-You are helping build the **Analytics module** of a Spendesk-like spend management app.
+You are helping the **Analytics team** explore and rebuild part of the Spendesk product.
 All files must be written to: `~/spendesk-workshop/team-analytics/`
 
-## Your Task
-Build a spend overview dashboard with charts and key metrics. READ ONLY — no data writes.
+## Step 1 — Explore first, build second
 
-## Supabase Tables (use the workshop schema)
-You can read from ALL tables:
-- `workshop.expenses` — amounts, categories, statuses
-- `workshop.budgets` — allocated vs spent per department
-- `workshop.transactions` — card spending
-- `workshop.cards`, `workshop.users`, `workshop.purchase_orders`
+Before writing any code, use Playwright to explore the Analytics / Dashboard section of Spendesk.
 
-## Import the shared DB client
+Ask the user to log in to Spendesk at https://app.spendesk.com, then navigate to the **Analytics** or **Dashboard** section.
+
+Once there:
+- Note the key metrics shown: total spend, number of transactions, budget utilisation
+- Note any charts or visualisations: spending by category, trends over time
+- Note any filters: date range, department, team
+- Screenshot or describe what you find
+
+Then say: **"Here’s what I found in the Analytics section. Ready to build a version of this? Say yes to start."**
+
+Do NOT start writing code until the user says yes.
+
+## Step 2 — Build it
+
+Once the user confirms, build the Analytics module.
+All files go in: `~/spendesk-workshop/team-analytics/`
+
+This module is READ ONLY — no writes to Supabase.
+
+## Supabase Tables
+Import the shared client:
 ```javascript
 import { supabase } from '../shared/supabase.js';
 ```
+You can read from ALL tables: expenses, cards, transactions, budgets, purchase_orders, users.
 
 ## Design System
-Import styles from `../design-system/tokens.css`
+Import: `../design-system/tokens.css`
 
-Use these CSS variables — never hardcode colours:
+Never hardcode colours — always use CSS variables:
 - `--color-bg`, `--color-surface`, `--color-accent`
-- `--color-amount` — money amounts (green monospace)
+- `--color-amount` — money values
 - `--color-text-muted` — chart labels
 
 Fonts: `'DM Sans'` for UI, `'DM Mono'` for numbers
 
 ## Build Order
-1. Stat cards — total spend, number of expenses, pending approvals count
+1. Stat cards — total spend, number of expenses, pending approvals
 2. Spending by category — bar or pie chart
-3. Stretch: budget utilisation by department (allocated vs spent)
+3. Stretch: budget utilisation per department as progress bars
 
-## Module Export (required for merge)
+## Module Export
 ```javascript
 export const MODULE_NAME = 'analytics';
 export const MODULE_LABEL = 'Analytics';
 export const MODULE_ICON = '📊';
 export default YourMainComponent;
 ```
-
-## Useful Prompts
-- "Build a dashboard with key spend metrics as stat cards"
-- "Add a bar chart showing total spend by category using Chart.js"
-- "Show budget utilisation per department as a progress bar"

@@ -1,36 +1,48 @@
 # Team Cards — Workshop Context
 
-You are helping build the **Cards module** of a Spendesk-like spend management app.
+You are helping the **Cards team** explore and rebuild part of the Spendesk product.
 All files must be written to: `~/spendesk-workshop/team-cards/`
 
-## Your Task
-Build a cards management interface. Start with a list view, then add actions.
+## Step 1 — Explore first, build second
 
-## Supabase Tables (use the workshop schema)
-- `workshop.cards` — card_name, last4, limit_amount, balance, status (active/frozen/pending), card_type (virtual/physical), user_id
-- `workshop.transactions` — amount, merchant, category, status, card_id
-- `workshop.users` — name, email, department
+Before writing any code, use Playwright to explore the Cards section of Spendesk.
 
-## Import the shared DB client
+Ask the user to log in to Spendesk at https://app.spendesk.com, then navigate to the **Cards** section.
+
+Once there:
+- Browse the cards list
+- Click into a card to see details
+- Note the key information shown: card name, holder, last 4 digits, balance, limit, status, card type
+- Note any actions available: freeze, unfreeze, request card, view transactions
+- Screenshot or describe what you find
+
+Then say: **"Here’s what I found in the Cards section. Ready to build a version of this? Say yes to start."**
+
+Do NOT start writing code until the user says yes.
+
+## Step 2 — Build it
+
+Once the user confirms, build the Cards module.
+All files go in: `~/spendesk-workshop/team-cards/`
+
+## Supabase Tables
+Import the shared client:
 ```javascript
 import { supabase } from '../shared/supabase.js';
 ```
+- `workshop.cards` — card_name, last4, limit_amount, balance, status, card_type, user_id
+- `workshop.transactions` — amount, merchant, category, status, card_id
+- `workshop.users` — name, email, department
 
 ## Design System
-Import styles from `../design-system/tokens.css`
+Import: `../design-system/tokens.css`
 
-Use these CSS variables — never hardcode colours:
-- `--color-bg` — page background
-- `--color-surface` — cards/panels
-- `--color-accent` — buttons, highlights
-- `--color-text` — primary text
-- `--color-text-muted` — labels
-- `--color-success` / `--color-warning` / `--color-danger` — status colours
-- `--color-amount` — money amounts (green monospace)
+Never hardcode colours — always use CSS variables:
+- `--color-bg`, `--color-surface`, `--color-accent`
+- `--color-success` / `--color-warning` / `--color-danger`
+- `--color-amount` — money values (green monospace)
 
-Fonts:
-- `'DM Sans'` — all UI text
-- `'DM Mono'` — amounts, card numbers, codes
+Fonts: `'DM Sans'` for UI, `'DM Mono'` for amounts and card numbers
 
 ## Status Badges
 - active → `badge-success`
@@ -38,19 +50,14 @@ Fonts:
 - pending → `badge-warning`
 
 ## Build Order
-1. List view — all cards with holder name, last4, balance vs limit, status badge
-2. Freeze / unfreeze button — updates Supabase status
-3. Stretch: click a card to see its transaction history
+1. Cards list — holder name, last4, balance vs limit, status badge, card type
+2. Freeze / unfreeze button — updates Supabase
+3. Stretch: click a card to see transaction history
 
-## Module Export (required for merge)
+## Module Export
 ```javascript
 export const MODULE_NAME = 'cards';
 export const MODULE_LABEL = 'Cards';
 export const MODULE_ICON = '💳';
 export default YourMainComponent;
 ```
-
-## Useful Prompts
-- "Build a list view of all cards with status badges and balances"
-- "Add a freeze button that updates the card status in Supabase"
-- "Show a transaction history when I click a card row"

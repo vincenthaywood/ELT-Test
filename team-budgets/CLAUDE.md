@@ -1,43 +1,56 @@
 # Team Budgets — Workshop Context
 
-You are helping build the **Budgets module** of a Spendesk-like spend management app.
+You are helping the **Budgets team** explore and rebuild part of the Spendesk product.
 All files must be written to: `~/spendesk-workshop/team-budgets/`
 
-## Your Task
-Build a department budget tracker showing allocated vs spent amounts.
+## Step 1 — Explore first, build second
 
-## Supabase Tables (use the workshop schema)
-- `workshop.budgets` — department_name, period, allocated_amount, spent_amount, status (active/overspent/closed)
+Before writing any code, use Playwright to explore the Budgets section of Spendesk.
 
-## Import the shared DB client
+Ask the user to log in to Spendesk at https://app.spendesk.com, then navigate to the **Budgets** section.
+
+Once there:
+- Browse the budget list
+- Note the key information: department, period, allocated amount, amount spent, remaining
+- Note any visual indicators: progress bars, colour coding for over/under budget
+- Note any actions available
+- Screenshot or describe what you find
+
+Then say: **"Here’s what I found in the Budgets section. Ready to build a version of this? Say yes to start."**
+
+Do NOT start writing code until the user says yes.
+
+## Step 2 — Build it
+
+Once the user confirms, build the Budgets module.
+All files go in: `~/spendesk-workshop/team-budgets/`
+
+## Supabase Tables
+Import the shared client:
 ```javascript
 import { supabase } from '../shared/supabase.js';
 ```
+- `workshop.budgets` — department_name, period, allocated_amount, spent_amount, status
 
 ## Design System
-Import styles from `../design-system/tokens.css`
+Import: `../design-system/tokens.css`
 
-Use these CSS variables — never hardcode colours:
+Never hardcode colours — always use CSS variables:
 - `--color-bg`, `--color-surface`, `--color-accent`
-- `--color-success` / `--color-warning` / `--color-danger` — for budget health
-- `--color-amount` — money amounts
+- `--color-success` / `--color-warning` / `--color-danger`
+- `--color-amount` — money values
 
 Fonts: `'DM Sans'` for UI, `'DM Mono'` for amounts
 
 ## Build Order
 1. Budget list — department, period, allocated vs spent, progress bar, status badge
-2. Progress bar colours: green < 70%, amber 70-90%, red > 90%
-3. Stretch: summary row showing total across all departments
+2. Progress bar colours: green < 70%, amber 70–90%, red > 90%
+3. Stretch: totals row across all departments
 
-## Module Export (required for merge)
+## Module Export
 ```javascript
 export const MODULE_NAME = 'budgets';
 export const MODULE_LABEL = 'Budgets';
 export const MODULE_ICON = '💰';
 export default YourMainComponent;
 ```
-
-## Useful Prompts
-- "Show all department budgets with a progress bar for spend vs allocation"
-- "Colour the progress bar green/amber/red based on utilisation percentage"
-- "Add a summary row at the bottom with totals across all departments"

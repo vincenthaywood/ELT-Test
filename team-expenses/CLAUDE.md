@@ -1,35 +1,47 @@
 # Team Expenses — Workshop Context
 
-You are helping build the **Expenses module** of a Spendesk-like spend management app.
+You are helping the **Expenses team** explore and rebuild part of the Spendesk product.
 All files must be written to: `~/spendesk-workshop/team-expenses/`
 
-## Your Task
-Build an expense submission and tracking interface.
+## Step 1 — Explore first, build second
 
-## Supabase Tables (use the workshop schema)
-- `workshop.expenses` — title, amount, category, status (draft/submitted/approved/rejected/paid), user_id, description
-- `workshop.users` — name, email, department
+Before writing any code, use Playwright to explore the Expenses section of Spendesk.
 
-## Import the shared DB client
+Ask the user to log in to Spendesk at https://app.spendesk.com, then navigate to the **Expense Claims** section.
+
+Once there:
+- Browse the expenses list
+- Note the key information shown: title, amount, category, submitter, date, status
+- Click into an expense to see the detail view
+- Note any actions: submit, approve, reject, add receipt
+- Screenshot or describe what you find
+
+Then say: **"Here’s what I found in the Expenses section. Ready to build a version of this? Say yes to start."**
+
+Do NOT start writing code until the user says yes.
+
+## Step 2 — Build it
+
+Once the user confirms, build the Expenses module.
+All files go in: `~/spendesk-workshop/team-expenses/`
+
+## Supabase Tables
+Import the shared client:
 ```javascript
 import { supabase } from '../shared/supabase.js';
 ```
+- `workshop.expenses` — title, amount, category, status, user_id, description
+- `workshop.users` — name, email, department
 
 ## Design System
-Import styles from `../design-system/tokens.css`
+Import: `../design-system/tokens.css`
 
-Use these CSS variables — never hardcode colours:
-- `--color-bg` — page background
-- `--color-surface` — cards/panels
-- `--color-accent` — buttons, highlights
-- `--color-text` — primary text
-- `--color-text-muted` — labels
-- `--color-success` / `--color-warning` / `--color-danger` — status colours
-- `--color-amount` — money amounts (green monospace)
+Never hardcode colours — always use CSS variables:
+- `--color-bg`, `--color-surface`, `--color-accent`
+- `--color-success` / `--color-warning` / `--color-danger`
+- `--color-amount` — money values
 
-Fonts:
-- `'DM Sans'` — all UI text
-- `'DM Mono'` — amounts
+Fonts: `'DM Sans'` for UI, `'DM Mono'` for amounts
 
 ## Status Badges
 - approved / paid → `badge-success`
@@ -38,19 +50,14 @@ Fonts:
 - draft → `badge-neutral`
 
 ## Build Order
-1. List view — all expenses with submitter name, amount, category, status badge
-2. Summary bar at top — total submitted, total approved, total value
-3. Stretch: submit a new expense (form that inserts to Supabase)
+1. Expenses list — submitter, title, amount, category, status badge
+2. Stats bar — total count and value by status
+3. Stretch: submit a new expense via a form
 
-## Module Export (required for merge)
+## Module Export
 ```javascript
 export const MODULE_NAME = 'expenses';
 export const MODULE_LABEL = 'Expenses';
 export const MODULE_ICON = '🧾';
 export default YourMainComponent;
 ```
-
-## Useful Prompts
-- "Build a list view of all expenses with status badges and submitter names"
-- "Add a stats bar showing total count and total value by status"
-- "Add a form to submit a new expense that saves to Supabase"

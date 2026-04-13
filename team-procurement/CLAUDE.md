@@ -1,27 +1,45 @@
 # Team Procurement — Workshop Context
 
-You are helping build the **Procurement module** of a Spendesk-like spend management app.
+You are helping the **Procurement team** explore and rebuild part of the Spendesk product.
 All files must be written to: `~/spendesk-workshop/team-procurement/`
 
-## Your Task
-Build a purchase order tracker.
+## Step 1 — Explore first, build second
 
-## Supabase Tables (use the workshop schema)
-- `workshop.purchase_orders` — vendor, description, amount, category, status (draft/pending_approval/approved/ordered/received/cancelled), priority (low/medium/high/urgent), due_date, requester_id
-- `workshop.users` — name, email, department
+Before writing any code, use Playwright to explore the Purchase Orders section of Spendesk.
 
-## Import the shared DB client
+Ask the user to log in to Spendesk at https://app.spendesk.com, then navigate to the **Purchase Orders** section.
+
+Once there:
+- Browse the PO list
+- Note the key information: vendor, description, amount, requester, status, priority
+- Note any actions: create PO, approve, cancel
+- Click into a PO to see the detail view
+- Screenshot or describe what you find
+
+Then say: **"Here’s what I found in the Purchase Orders section. Ready to build a version of this? Say yes to start."**
+
+Do NOT start writing code until the user says yes.
+
+## Step 2 — Build it
+
+Once the user confirms, build the Procurement module.
+All files go in: `~/spendesk-workshop/team-procurement/`
+
+## Supabase Tables
+Import the shared client:
 ```javascript
 import { supabase } from '../shared/supabase.js';
 ```
+- `workshop.purchase_orders` — vendor, description, amount, category, status, priority, due_date, requester_id
+- `workshop.users` — name, email, department
 
 ## Design System
-Import styles from `../design-system/tokens.css`
+Import: `../design-system/tokens.css`
 
-Use these CSS variables — never hardcode colours:
+Never hardcode colours — always use CSS variables:
 - `--color-bg`, `--color-surface`, `--color-accent`
 - `--color-success` / `--color-warning` / `--color-danger`
-- `--color-amount` — money amounts
+- `--color-amount` — money values
 
 Fonts: `'DM Sans'` for UI, `'DM Mono'` for amounts
 
@@ -32,18 +50,13 @@ Fonts: `'DM Sans'` for UI, `'DM Mono'` for amounts
 - low → `badge-neutral`
 
 ## Build Order
-1. PO list — vendor, amount, priority badge, status badge, requester name, due date
-2. Stretch: create a new PO with a simple form
+1. PO list — vendor, amount, priority badge, status badge, requester, due date
+2. Stretch: create a new PO via a form
 
-## Module Export (required for merge)
+## Module Export
 ```javascript
 export const MODULE_NAME = 'procurement';
 export const MODULE_LABEL = 'Procurement';
 export const MODULE_ICON = '📦';
 export default YourMainComponent;
 ```
-
-## Useful Prompts
-- "Build a list of purchase orders with priority and status badges"
-- "Sort by due date with the most urgent at the top"
-- "Add a form to create a new purchase order that saves to Supabase"
