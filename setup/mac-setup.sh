@@ -20,7 +20,14 @@ echo ""
 
 # ── Node.js ───────────────────────────────────────────────────
 echo -e "${YELLOW}[1/5]${NC} Checking Node.js..."
-if ! command -v node &>/dev/null; then
+
+# Load full PATH — curl|bash strips a lot of locations
+export PATH="/usr/local/bin:/usr/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
+
+# Find node wherever it might be
+NODE_BIN=$(which node 2>/dev/null || ls /usr/local/bin/node /opt/homebrew/bin/node /opt/local/bin/node 2>/dev/null | head -1)
+
+if [ -z "$NODE_BIN" ]; then
   echo -e "${YELLOW}  Node.js not found — installing automatically...${NC}"
 
   ARCH=$(uname -m)
@@ -38,27 +45,38 @@ if ! command -v node &>/dev/null; then
   sudo installer -pkg "$TMP_PKG" -target / > /dev/null 2>&1
   rm -f "$TMP_PKG"
 
+  # Reload PATH after install
   export PATH="/usr/local/bin:/usr/bin:$PATH"
+  NODE_BIN=$(which node 2>/dev/null)
 
-  if command -v node &>/dev/null; then
-    echo -e "${GREEN}  ✓ Node.js $(node --version) installed${NC}"
+  if [ -n "$NODE_BIN" ]; then
+    echo -e "${GREEN}  ✓ Node.js $($NODE_BIN --version) installed${NC}"
   else
     echo -e "${RED}  ✗ Auto-install failed.${NC}"
     echo "  Please install manually from https://nodejs.org then paste the setup command again."
     exit 1
   fi
 else
-  echo -e "${GREEN}  ✓ Node.js $(node --version)${NC}"
+  echo -e "${GREEN}  ✓ Node.js $($NODE_BIN --version)${NC}"
 fi
+
+# Make sure npm is on PATH too
+NPM_BIN=$(dirname "$NODE_BIN")/npm
 
 # ── Claude Code ───────────────────────────────────────────────
 echo ""
 echo -e "${YELLOW}[2/5]${NC} Installing Claude Code..."
-if command -v claude &>/dev/null; then
+CLAUDE_BIN=$(which claude 2>/dev/null || ls /usr/local/bin/claude "$HOME/.npm-global/bin/claude" 2>/dev/null | head -1)
+
+if [ -n "$CLAUDE_BIN" ]; then
   echo -e "${GREEN}  ✓ Already installed${NC}"
 else
-  npm install -g @anthropic-ai/claude-code --silent
-  if command -v claude &>/dev/null; then
+  echo "  Installing (takes ~30 seconds)..."
+  "$NPM_BIN" install -g @anthropic-ai/claude-code --silent
+  export PATH="/usr/local/bin:$HOME/.npm-global/bin:$PATH"
+  CLAUDE_BIN=$(which claude 2>/dev/null)
+
+  if [ -n "$CLAUDE_BIN" ]; then
     echo -e "${GREEN}  ✓ Installed${NC}"
   else
     echo -e "${RED}  ✗ Failed — please screenshot this and send to Vincent${NC}"
@@ -141,11 +159,11 @@ else
 fi
 
 cd "$WORKSHOP"
-npm install --silent 2>/dev/null
+"$NPM_BIN" install --silent 2>/dev/null
 echo -e "${GREEN}  ✓ Files ready${NC}"
 
 # ── Start dev server ──────────────────────────────────────────
-npm run dev &>/dev/null &
+"$NPM_BIN" run dev &>/dev/null &
 echo $! > /tmp/workshop-dev.pid
 sleep 3
 open http://localhost:5173
@@ -163,7 +181,7 @@ echo ""
 echo "  A browser tab will open. Use your usual claude.ai account."
 echo ""
 read -p "  Press Enter when ready..."
-claude login
+"$CLAUDE_BIN" login
 
 # ── Done ──────────────────────────────────────────────────────
 clear
