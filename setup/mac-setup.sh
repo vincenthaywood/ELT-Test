@@ -31,12 +31,12 @@ echo ""
 read -p "  Enter number (1-6): " TEAM_NUM
 
 case $TEAM_NUM in
-  1) TEAM_DIR="team-cards";       TEAM_NAME="Cards" ;;
-  2) TEAM_DIR="team-expenses";    TEAM_NAME="Expenses" ;;
-  3) TEAM_DIR="team-approvals";   TEAM_NAME="Approvals" ;;
-  4) TEAM_DIR="team-analytics";   TEAM_NAME="Analytics" ;;
-  5) TEAM_DIR="team-budgets";     TEAM_NAME="Budgets" ;;
-  6) TEAM_DIR="team-procurement"; TEAM_NAME="Procurement" ;;
+  1) TEAM_DIR="team-cards";       TEAM_NAME="Cards";       SPENDESK_SECTION="Cards" ;;
+  2) TEAM_DIR="team-expenses";    TEAM_NAME="Expenses";    SPENDESK_SECTION="Expense Claims" ;;
+  3) TEAM_DIR="team-approvals";   TEAM_NAME="Approvals";   SPENDESK_SECTION="Requests / Approvals" ;;
+  4) TEAM_DIR="team-analytics";   TEAM_NAME="Analytics";   SPENDESK_SECTION="Analytics / Dashboard" ;;
+  5) TEAM_DIR="team-budgets";     TEAM_NAME="Budgets";     SPENDESK_SECTION="Budgets" ;;
+  6) TEAM_DIR="team-procurement"; TEAM_NAME="Procurement"; SPENDESK_SECTION="Purchase Orders" ;;
   *)
     echo "  Invalid choice. Run the command again."
     exit 1
@@ -55,19 +55,12 @@ DESIGN="$HOME/spendesk-workshop/design-system"
 
 mkdir -p "$WORKSHOP" "$SHARED" "$DESIGN"
 
-# Team CLAUDE.md
-curl -fsSL "$REPO/$TEAM_DIR/CLAUDE.md" -o "$WORKSHOP/CLAUDE.md"
+curl -fsSL "$REPO/$TEAM_DIR/CLAUDE.md"       -o "$WORKSHOP/CLAUDE.md"
+curl -fsSL "$REPO/shared/supabase.js"        -o "$SHARED/supabase.js"
+curl -fsSL "$REPO/shared/auth.js"            -o "$SHARED/auth.js"
+curl -fsSL "$REPO/design-system/tokens.css"  -o "$DESIGN/tokens.css"
 
-# Shared files Claude Desktop needs
-curl -fsSL "$REPO/shared/supabase.js"   -o "$SHARED/supabase.js"
-curl -fsSL "$REPO/shared/auth.js"       -o "$SHARED/auth.js"
-curl -fsSL "$REPO/shared/mock-data.json" -o "$SHARED/mock-data.json" 2>/dev/null || true
-
-# Design system
-curl -fsSL "$REPO/design-system/tokens.css" -o "$DESIGN/tokens.css"
-
-echo -e "${GREEN}  ✓ Folder ready: ~/spendesk-workshop/$TEAM_DIR${NC}"
-echo -e "${GREEN}  ✓ CLAUDE.md, shared files and design system downloaded${NC}"
+echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop/$TEAM_DIR${NC}"
 
 # ── Write MCP config ──────────────────────────────────────────
 echo ""
@@ -106,7 +99,7 @@ MCPEOF
 echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
 
 # ── Copy first prompt to clipboard ────────────────────────────
-FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — write all files there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md and then let's start building."
+FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — all files go there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md to understand the context. Then ask me to log in to Spendesk so you can explore the $SPENDESK_SECTION section before we build anything."
 echo "$FIRST_PROMPT" | pbcopy
 
 # ── Done ──────────────────────────────────────────────────────
@@ -115,11 +108,15 @@ echo -e "${GREEN}${BOLD}  ╔═════════════════
 echo -e "  ║   ✓  All done!                           ║"
 echo -e "  ╚══════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  Team:   ${BOLD}$TEAM_NAME${NC}"
-echo -e "  Folder: ${CYAN}~/spendesk-workshop/$TEAM_DIR${NC}"
+echo -e "  Team:    ${BOLD}$TEAM_NAME${NC}"
+echo -e "  Section: ${CYAN}$SPENDESK_SECTION${NC}"
+echo -e "  Folder:  ${CYAN}~/spendesk-workshop/$TEAM_DIR${NC}"
 echo ""
 echo -e "  ${BOLD}On the day:${NC}"
 echo "  1. Open Claude Desktop"
-echo "  2. Press Cmd+V — your first prompt is already in your clipboard"
+echo "  2. Press Cmd+V to paste your first prompt"
+echo "  3. Claude will ask you to log in to Spendesk"
+echo "  4. It explores your section, shows you what it found"
+echo "  5. Say 'yes' when you're ready to build"
 echo ""
 read -p "  Press Enter to close..."
