@@ -7,6 +7,7 @@ clear
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
 BOLD='\033[1m'
 CYAN='\033[0;36m'
@@ -19,22 +20,23 @@ echo -e "  ║   Spendesk Workshop — Mac Setup          ║"
 echo -e "  ╚══════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Find npx — Claude Desktop needs the full path ────────────
-# Claude Desktop launches with a stripped PATH so 'npx' alone won't work
+# ── Find Node + npm ───────────────────────────────────────────
 export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:$PATH"
-NPX_PATH=$(which npx 2>/dev/null)
 
-if [ -z "$NPX_PATH" ]; then
-  echo -e "${YELLOW}  npx not found — Node.js may not be installed.${NC}"
-  echo "  Please install Node.js from https://nodejs.org then run this again."
+NPM_PATH=$(which npm 2>/dev/null)
+NODE_PATH=$(which node 2>/dev/null)
+
+if [ -z "$NPM_PATH" ]; then
+  echo -e "${RED}  ✗ Node.js not found.${NC}"
+  echo "  Please install from https://nodejs.org then run this again."
   exit 1
 fi
 
-echo -e "${GREEN}  ✓ Found npx at $NPX_PATH${NC}"
+echo -e "${GREEN}  ✓ Node.js found: $NODE_PATH${NC}"
 
 # ── Team selection ────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[1/3]${NC} ${BOLD}Which team are you on?${NC}"
+echo -e "${YELLOW}[1/4]${NC} ${BOLD}Which team are you on?${NC}"
 echo ""
 echo -e "  ${CYAN}1)${NC} Cards"
 echo -e "  ${CYAN}2)${NC} Expenses"
@@ -60,9 +62,40 @@ esac
 
 echo -e "${GREEN}  ✓ Team ${BOLD}$TEAM_NAME${NC}"
 
+# ── Install MCP packages globally ────────────────────────────
+# Pre-installing avoids npx download-on-demand which gets blocked
+# by macOS Gatekeeper when launched from Claude Desktop
+echo ""
+echo -e "${YELLOW}[2/4]${NC} Installing workshop tools (takes ~1 min)..."
+
+"$NPM_PATH" install -g \
+  @supabase/mcp-server-supabase \
+  @playwright/mcp \
+  @modelcontextprotocol/server-filesystem \
+  --silent 2>/dev/null
+
+# Find the installed binary locations
+NPM_PREFIX=$("$NPM_PATH" config get prefix 2>/dev/null)
+NPM_BIN="$NPM_PREFIX/bin"
+
+# Locate each binary
+SUPABASE_BIN="$NPM_BIN/mcp-server-supabase"
+PLAYWRIGHT_BIN="$NPM_BIN/mcp-server-playwright"
+FILESYSTEM_BIN="$NPM_BIN/mcp-server-filesystem"
+
+# Fallback — some packages use different binary names
+[ ! -f "$SUPABASE_BIN" ]   && SUPABASE_BIN=$(which mcp-server-supabase 2>/dev/null)
+[ ! -f "$PLAYWRIGHT_BIN" ] && PLAYWRIGHT_BIN=$(which mcp-server-playwright 2>/dev/null)
+[ ! -f "$FILESYSTEM_BIN" ] && FILESYSTEM_BIN=$(which mcp-server-filesystem 2>/dev/null)
+
+# If binaries still not found, fall back to node -e runner via full npm path
+NPX_PATH=$(which npx 2>/dev/null || echo "$NPM_BIN/npx")
+
+echo -e "${GREEN}  ✓ Tools installed${NC}"
+
 # ── Create folder + download files ───────────────────────────
 echo ""
-echo -e "${YELLOW}[2/3]${NC} Setting up workshop folder..."
+echo -e "${YELLOW}[3/4]${NC} Setting up workshop folder..."
 
 WORKSHOP="$HOME/spendesk-workshop/$TEAM_DIR"
 SHARED="$HOME/spendesk-workshop/shared"
@@ -79,41 +112,55 @@ echo -e "${GREEN}  ✓ Files ready at ~/spendesk-workshop/$TEAM_DIR${NC}"
 
 # ── Write MCP config for Claude Desktop ──────────────────────
 echo ""
-echo -e "${YELLOW}[3/3]${NC} Configuring Claude Desktop tools..."
+echo -e "${YELLOW}[4/4]${NC} Configuring Claude Desktop..."
 
 mkdir -p "$HOME/Library/Application Support/Claude"
 
-# Use the detected full path to npx so Claude Desktop can find it
+# Use installed binaries if found, otherwise fall back to npx with full path
+if [ -f "$SUPABASE_BIN" ]; then
+  SUPABASE_CMD="$SUPABASE_BIN"
+  SUPABASE_ARGS="[\"--supabase-url\", \"https://beafagckgeidshnoikzg.supabase.co\", \"--supabase-api-key\", \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs\"]"
+else
+  SUPABASE_CMD="$NPX_PATH"
+  SUPABASE_ARGS="[\"-y\", \"@supabase/mcp-server-supabase@latest\", \"--supabase-url\", \"https://beafagckgeidshnoikzg.supabase.co\", \"--supabase-api-key\", \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs\"]"
+fi
+
+if [ -f "$PLAYWRIGHT_BIN" ]; then
+  PLAYWRIGHT_CMD="$PLAYWRIGHT_BIN"
+  PLAYWRIGHT_ARGS="[\"--headless\"]"
+else
+  PLAYWRIGHT_CMD="$NPX_PATH"
+  PLAYWRIGHT_ARGS="[\"-y\", \"@playwright/mcp@latest\", \"--headless\"]"
+fi
+
+if [ -f "$FILESYSTEM_BIN" ]; then
+  FILESYSTEM_CMD="$FILESYSTEM_BIN"
+  FILESYSTEM_ARGS="[\"$HOME/spendesk-workshop\"]"
+else
+  FILESYSTEM_CMD="$NPX_PATH"
+  FILESYSTEM_ARGS="[\"-y\", \"@modelcontextprotocol/server-filesystem\", \"$HOME/spendesk-workshop\"]"
+fi
+
 cat > "$CLAUDE_DESKTOP_CONFIG" << MCPEOF
 {
   "mcpServers": {
     "supabase": {
-      "command": "$NPX_PATH",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--supabase-url", "https://beafagckgeidshnoikzg.supabase.co",
-        "--supabase-api-key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJlYWZhZ2NrZ2VpZHNobm9pa3pnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNTgxODMsImV4cCI6MjA4MjkzNDE4M30.cJW2Ar25jzcTzcVLBxLjdmrmWJx4mNgfspofaNMJIJs"
-      ]
+      "command": "$SUPABASE_CMD",
+      "args": $SUPABASE_ARGS
     },
     "playwright": {
-      "command": "$NPX_PATH",
-      "args": ["-y", "@playwright/mcp@latest", "--headless"]
+      "command": "$PLAYWRIGHT_CMD",
+      "args": $PLAYWRIGHT_ARGS
     },
     "filesystem": {
-      "command": "$NPX_PATH",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "$HOME/spendesk-workshop"
-      ]
+      "command": "$FILESYSTEM_CMD",
+      "args": $FILESYSTEM_ARGS
     }
   }
 }
 MCPEOF
 
-echo -e "${GREEN}  ✓ Supabase, Playwright and Filesystem configured${NC}"
-echo -e "  ${CYAN}Using npx at: $NPX_PATH${NC}"
+echo -e "${GREEN}  ✓ Claude Desktop configured${NC}"
 
 # ── Copy first prompt to clipboard ────────────────────────────
 FIRST_PROMPT="I am on the $TEAM_NAME team. My working folder is $HOME/spendesk-workshop/$TEAM_DIR — all files go there. Read $HOME/spendesk-workshop/$TEAM_DIR/CLAUDE.md to understand the context. Then ask me to log in to Spendesk so you can explore the $SPENDESK_SECTION section before we build anything."
